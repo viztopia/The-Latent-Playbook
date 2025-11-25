@@ -10,6 +10,8 @@ publishDate: '2025-11-24'
 author: 'Your Name'
 
 # --- Optional Info ---
+# URL to your personal website or profile.
+authorUrl: 'https://your-website-or-profile.com'
 # Use YYYY-MM-DD format. Update this if you make significant changes.
 lastUpdated: '2025-11-24'
 # Path to the hero image/video for the play card. Should be in /public/The-Latent-Playbook/assets/videos/your-play-slug/
