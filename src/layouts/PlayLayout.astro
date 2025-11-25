@@ -1,0 +1,115 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  publishDate: Date;
+  lastUpdated?: Date;
+  category: string;
+  author: string;
+  authorUrl?: string;
+  heroMedia?: string;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+}
+
+const {
+  title,
+  description,
+  publishDate,
+  lastUpdated,
+  category,
+  author,
+  authorUrl,
+  heroMedia,
+  difficulty,
+} = Astro.props as Props;
+---
+
+<BaseLayout title={title} description={description}>
+  <article class="space-y-12">
+    <header class="space-y-8">
+      <div class="space-y-4">
+        <span class="inline-flex items-center gap-3">
+          <span class="rounded-full border border-accent/40 px-4 py-1 text-xs uppercase tracking-[0.35em] text-accent">
+            {category}
+          </span>
+          {difficulty && (
+            <span class="rounded-full border border-accentMuted/40 px-4 py-1 text-xs uppercase tracking-[0.35em] text-accentMuted">
+              {difficulty}
+            </span>
+          )}
+        </span>
+        <h1 class="font-heading text-4xl leading-tight text-text md:text-5xl">{title}</h1>
+        <p class="max-w-3xl font-body text-lg leading-relaxed text-text/85">{description}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-6 text-sm text-textMuted">
+        {authorUrl ? (
+          <span>
+            By{' '}
+            <a
+              href={authorUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-textMuted transition ease-smooth duration-200 hover:text-accent"
+            >
+              {author}
+            </a>
+          </span>
+        ) : (
+          <span>By {author}</span>
+        )}
+        <span class="h-1 w-1 rounded-full bg-border/80" aria-hidden="true"></span>
+        <span>
+          Published: <time datetime={publishDate}>
+            {new Date(publishDate).toLocaleDateString('en-US', {
+              timeZone: 'UTC',
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </time>
+        </span>
+        {lastUpdated && (
+          <>
+            <span class="h-1 w-1 rounded-full bg-border/80" aria-hidden="true"></span>
+            <span>
+              Last Updated: <time datetime={lastUpdated}>
+                {new Date(lastUpdated).toLocaleDateString('en-US', {
+                  timeZone: 'UTC',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </time>
+            </span>
+          </>
+        )}
+      </div>
+      {heroMedia && (
+        <div class="overflow-hidden rounded-2xl border border-border/60 shadow-card">
+          {/\.(mp4|webm)$/i.test(heroMedia) ? (
+            <video
+              src={heroMedia}
+              controls
+              playsinline
+              class="h-full w-full"
+              poster={heroMedia.replace(/\.(mp4|webm)$/i, '.jpg')}
+            >
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <img
+              src={heroMedia}
+              alt={`Hero image for ${title}`}
+              class="h-full w-full object-cover"
+            />
+          )}
+        </div>
+      )}
+    </header>
+  <div class="space-y-8 font-body text-base leading-relaxed text-text/90">
+      <slot />
+    </div>
+  </article>
+</BaseLayout>

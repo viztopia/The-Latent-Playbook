@@ -1,0 +1,62 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  play: CollectionEntry<'plays'>;
+}
+
+const { play } = Astro.props as Props;
+const { data, slug } = play;
+---
+
+<article class="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface/95 shadow-card transition ease-smooth duration-200 hover:-translate-y-1 hover:border-accent">
+  <a href={`/plays/${slug}/`} class="flex h-full flex-col">
+    <div class="relative aspect-[16/10] w-full overflow-hidden border-b border-border/40">
+      {data.heroMedia ? (
+        /\.(mp4|webm)$/i.test(data.heroMedia) ? (
+          <video
+            src={data.heroMedia}
+            muted
+            loop
+            playsinline
+            class="h-full w-full object-cover transition ease-smooth duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <img
+            src={data.heroMedia}
+            alt={`Preview for ${data.title}`}
+            class="h-full w-full object-cover transition ease-smooth duration-300 group-hover:scale-105"
+          />
+        )
+      ) : (
+        <div class="flex h-full w-full items-center justify-center bg-background/60 text-xs uppercase tracking-[0.4em] text-textMuted">
+          No media provided
+        </div>
+      )}
+    </div>
+    <div class="flex flex-1 flex-col gap-4 px-6 py-6">
+      <div class="flex items-center justify-between text-xs font-medium uppercase tracking-[0.3em] text-accent">
+        <span>{data.category}</span>
+        <time datetime={data.publishDate} class="text-textMuted/80">
+          {new Date(data.publishDate).toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            timeZone: 'UTC',
+          })}
+        </time>
+      </div>
+      <h3 class="font-heading text-2xl text-text">
+        {data.title}
+      </h3>
+      <p class="font-body text-sm text-text/80">
+        {data.description}
+      </p>
+      {data.difficulty && (
+        <span class="self-start rounded-full border border-accent/50 px-3 py-1 text-xs uppercase tracking-[0.2em] text-accent">
+          {data.difficulty}
+        </span>
+      )}
+    </div>
+  </a>
+</article>

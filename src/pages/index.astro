@@ -1,0 +1,37 @@
+---
+import { getCollection } from 'astro:content';
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PlayCard from '../components/PlayCard.astro';
+
+const plays = (await getCollection('plays')).sort((a, b) => {
+	const aDate = new Date(a.data.publishDate);
+	const bDate = new Date(b.data.publishDate);
+	aDate.setUTCHours(0, 0, 0, 0);
+	bDate.setUTCHours(0, 0, 0, 0);
+	return bDate.getTime() - aDate.getTime();
+});
+---
+
+<BaseLayout>
+	<section class="space-y-6">
+		<h1 class="font-heading text-5xl leading-tight text-text">The Latent Playbook</h1>
+		<p class="max-w-3xl text-lg text-text/85">
+			The Latent Playbook is a living collection of tools, techniques, and workflows for generative filmmaking.
+			Born from the Hypercinema Lab at NYU, this guide aims at providing practical "plays" for artists, filmmakers, and
+			technologists looking to harness the creative power of video-making AI, as well as providing an entry point for reflection.
+		</p>
+	</section>
+
+	<section class="mt-12 space-y-6">
+		<div class="flex items-center justify-between">
+			<h2 class="font-heading text-3xl text-text">Featured plays</h2>
+			<a href="/plays/" class="text-sm uppercase tracking-[0.3em] text-accent">Browse all</a>
+		</div>
+		<div class="grid gap-8 md:grid-cols-2">
+			{plays.map((play) => (
+				<PlayCard play={play} />
+			))}
+		</div>
+	</section>
+</BaseLayout>

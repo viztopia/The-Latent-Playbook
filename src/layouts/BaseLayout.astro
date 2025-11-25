@@ -1,0 +1,55 @@
+---
+import '../styles/global.css';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/playfair-display/600.css';
+import '@fontsource/playfair-display/700.css';
+import '@fontsource/jetbrains-mono/400.css';
+
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const siteTitle = 'The Latent Playbook';
+const siteDescription =
+  'A living collection of plays, tools, and workflows for generative filmmaking from NYU\'s Hypercinema Lab.';
+
+const {
+  title = siteTitle,
+  description = siteDescription,
+} = Astro.props;
+
+const pageTitle = title === siteTitle ? siteTitle : `${title} • ${siteTitle}`;
+---
+
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+
+    <link rel="icon" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content="https://github.com/viztopia/The-Latent-Playbook" />
+    <meta property="og:image" content="/social-card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/book.svg" />
+  </head>
+  <body class="min-h-full bg-background font-body text-text">
+    <a
+      href="#main-content"
+      class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full bg-accent px-4 py-2 text-sm font-medium text-background transition ease-smooth duration-200 focus-visible:translate-y-3 focus-visible:outline-none"
+    >
+      Skip to content
+    </a>
+    <Header />
+    <main id="main-content" class="mx-auto w-full max-w-6xl px-6 py-16 md:px-10">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

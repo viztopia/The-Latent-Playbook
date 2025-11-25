@@ -1,0 +1,25 @@
+name: Deploy Astro site
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install, build, and deploy
+        uses: withastro/action@v2
+        with:
+          path: .
+          node-version: 22
+          package-manager: npm
+          cache: npm
+          deploy-dir: ./dist
