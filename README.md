@@ -49,13 +49,13 @@ The dev server runs at <http://localhost:4321>. Press `Ctrl+C` to stop it.
 
 To contribute a new play, please follow these steps:
 
-1.  **Use the Template**: Copy the `materials/templates/play-template.md` file to `src/content/plays/` and rename it to reflect your play's topic (e.g., `my-new-play.md`).
+1.  **Use the Template**: Copy the `templates/play-template.md` file to `src/content/plays/` and rename it to reflect your play's topic (e.g., `my-new-play.md`).
 2.  **Add Content**: Fill out the frontmatter and write your content following the instructions in the template.
 3.  **Add Media**: Place any videos or images in a new folder under `public/assets/videos/` that matches your markdown file's name (e.g., `public/assets/videos/my-new-play/`).
-4.  **Submit a Pull Request**: Once your play is ready, submit a pull request for review.
+4.  **Submit a Pull Request**: Once your play is ready, submit a pull request.
 
 For more details on content authoring, see the template. Media assets referenced by plays should be added under `public/assets/videos/`.
 
 ## Deployment
 
-Pushes to `main` trigger `.github/workflows/deploy.yml`, which builds the site with Node 22, caches npm dependencies, and publishes the `dist/` output to the `gh-pages` branch via the official `withastro/action` deploy step. Configure the GitHub Pages settings to serve from `gh-pages / (root)`.
+Pushes to `main` trigger `.github/workflows/deploy.yml`, which builds the site with Node 22, caches npm dependencies, and publishes automatically via GitHub Pages.
