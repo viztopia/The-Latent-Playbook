@@ -6,7 +6,7 @@ publishDate: '2025-10-12'
 lastUpdated: '2025-10-21'
 author: 'Yuguang Zhang'
 authorUrl: 'https://www.ygzhang.com'
-heroMedia: '/assets/videos/character-animation-wan-animate/hero.jpg'
+heroMedia: '/The-Latent-Playbook/assets/videos/character-animation-wan-animate/hero.jpg'
 difficulty: 'intermediate'
 tags:
   - ComfyUI
@@ -18,7 +18,7 @@ tags:
 The AI animation community is buzzing with the recent open-source release of Wan 2.2 Animate, a powerful new model that is revolutionizing character animation. This tool allows creators to take a static character image and bring it to life using a reference video. It intelligently transfers the motion, expressions, and even subtle gestures from the performer in the video to the character, producing incredibly realistic and high-fidelity results.
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/character-animation-wan-animate/a-vs-a1.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/a-vs-a1.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
@@ -39,10 +39,10 @@ This mode is designed to animate a static character from scratch. It isolates th
 
 <div class="video-grid">
   <video controls autoplay loop muted playsinline>
-    <source src="/assets/videos/character-animation-wan-animate/p-vs-p1.mp4" type="video/mp4" />
+    <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/p-vs-p1.mp4" type="video/mp4" />
   </video>
   <video controls autoplay loop muted playsinline>
-    <source src="/assets/videos/character-animation-wan-animate/p-vs-p3.mp4" type="video/mp4" />
+    <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/p-vs-p3.mp4" type="video/mp4" />
   </video>
 </div>
 
@@ -50,10 +50,10 @@ Here's two more examples using a different reference video. Notice how the two c
 
 <div class="video-grid">
   <video controls autoplay loop muted playsinline>
-    <source src="/assets/videos/character-animation-wan-animate/q-vs-q1.mp4" type="video/mp4" />
+    <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/q-vs-q1.mp4" type="video/mp4" />
   </video>
   <video controls autoplay loop muted playsinline>
-    <source src="/assets/videos/character-animation-wan-animate/q-vs-q3.mp4" type="video/mp4" />
+    <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/q-vs-q3.mp4" type="video/mp4" />
   </video>
 </div>
 
@@ -78,19 +78,19 @@ One thing to note is that the mask of the person in the reference video will hav
 
 <div class="video-grid">
   <video autoplay loop muted playsinline>
-    <source src="/assets/videos/character-animation-wan-animate/p-vs-p2.mp4" type="video/mp4" />
+    <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/p-vs-p2.mp4" type="video/mp4" />
   </video>
   <video autoplay loop muted playsinline>
-    <source src="/assets/videos/character-animation-wan-animate/p-vs-p4.mp4" type="video/mp4" />
+    <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/p-vs-p4.mp4" type="video/mp4" />
   </video>
 </div>
 
 <div class="video-grid">
   <video autoplay loop muted playsinline>
-    <source src="/assets/videos/character-animation-wan-animate/q-vs-q2.mp4" type="video/mp4" />
+    <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/q-vs-q2.mp4" type="video/mp4" />
   </video>
   <video autoplay loop muted playsinline>
-    <source src="/assets/videos/character-animation-wan-animate/q-vs-q4.mp4" type="video/mp4" />
+    <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/q-vs-q4.mp4" type="video/mp4" />
   </video>
 </div>
 
@@ -143,15 +143,15 @@ The ComfyUI graph for Wan 2.2 Animate connects these nodes and models to process
 A typical workflow follows these steps:
 
 - Specifying Width and Height:
-<img src="/assets/videos/character-animation-wan-animate/comfy_width_height.png" alt="ComfyUI Workflow" style="width:20%;"/>
+<img src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/comfy_width_height.png" alt="ComfyUI Workflow" style="width:20%;"/>
 
 - Inputs: Use video loader to load your reference video and a standard Load Image node for your character image.
-<img src="/assets/videos/character-animation-wan-animate/comfy_input.png" alt="ComfyUI Workflow" style="width:60%;"/>
+<img src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/comfy_input.png" alt="ComfyUI Workflow" style="width:60%;"/>
 
 - Preprocessing: The reference video is fed into the DWPreprocessor node, which analyzes the face and the body pose frame-by-frame and generates a skeleton sequence.
 
 - Masking is needed for you want to do Mix Mode. You would need to feed the character mask and the background image to the WanAnimateToVideo node to enable Mix Mode.
-<img src="/assets/videos/character-animation-wan-animate/comfy_mask.png" alt="ComfyUI Workflow" style="width:30%;"/>
+<img src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/comfy_mask.png" alt="ComfyUI Workflow" style="width:30%;"/>
 
 - Model Loading: The Wan Animate model, Video VAE, and Relighting LoRA are loaded using their respective loaders.
 
@@ -165,33 +165,33 @@ This setup allows the model to accurately transfer the motion from the reference
 
 For production-level application, facial expression transfer is usually a gold standard test. In my tests, while the head movement is pretty accurate, the nuances of the expressions are still a bit hit-or-miss. Below is a series of tests using classic movie scenes with strong emotional acting, as a showcase of its current capabilities / limitations. Here we use a generated middle-aged Asian female character as the source image to animate. Left: original footage, Right: Wan 2.2 Animate output.
 
-<img src="/assets/videos/character-animation-wan-animate/woman_actor.png" alt="Character Image" style="width:50%;"/>
+<img src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/woman_actor.png" alt="Character Image" style="width:50%;"/>
 
 *Our generated actor character image*
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/character-animation-wan-animate/a-vs-a1.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/a-vs-a1.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
 *Tony Leung in "Infernal Affairs" (2002)*
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/character-animation-wan-animate/b-vs-b1.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/b-vs-b1.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
 *Cate Blanchett in "Blue Jasmine" (2013)*
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/character-animation-wan-animate/c-vs-c1.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/c-vs-c1.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
 *Al Pacino in "The Godfather" (1972)*
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/character-animation-wan-animate/d-vs-d1.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/d-vs-d1.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 

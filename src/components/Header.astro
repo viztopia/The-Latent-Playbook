@@ -1,8 +1,8 @@
 ---
 const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '/plays/', label: 'Plays' },
-  { href: '/about/', label: 'About' },
+  { href: import.meta.env.BASE_URL, label: 'Home' },
+  { href: `${import.meta.env.BASE_URL}/plays/`, label: 'Plays' },
+  { href: `${import.meta.env.BASE_URL}/about/`, label: 'About' },
 ];
 ---
 

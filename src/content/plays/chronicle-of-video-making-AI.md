@@ -6,7 +6,7 @@ publishDate: '2025-09-18'
 lastUpdated: '2025-11-18'
 author: 'Yuguang Zhang'
 authorUrl: 'https://www.ygzhang.com'
-heroMedia: '/assets/videos/chronicle-of-video-making-AI/hero.jpg'
+heroMedia: '/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/hero.jpg'
 difficulty: 'beginner'
 tags:
   - video-AI
@@ -34,8 +34,8 @@ These systems were important proof-of-concepts: they showed that a neural networ
 
 Examples of <a href="https://github.com/snap-research/MoCoGAN-HD">MoCoGAN-HQ</a> outputs:
 
-![MoCoGAN-HQ Example 1](/assets/videos/chronicle-of-video-making-AI/AFHQ.gif)
-![MoCoGAN-HQ Example 2](/assets/videos/chronicle-of-video-making-AI/FFHQ_1024.gif)
+![MoCoGAN-HQ Example 1](/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/AFHQ.gif)
+![MoCoGAN-HQ Example 2](/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/FFHQ_1024.gif)
 ---
 
 ## 2. Diffusion Era: From Text-to-Image to DIY Video
@@ -51,11 +51,11 @@ Two community tools became iconic in this phase:
 
 Disco Diffusion Animation by <a href="https://www.artstation.com/seedmole" target="_blank">Seedmole</a>:
 
-![Disco Diffusion Example 1](/assets/videos/chronicle-of-video-making-AI/discodiffusion-seedmole-1.gif)
+![Disco Diffusion Example 1](/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/discodiffusion-seedmole-1.gif)
 
 Deforum Animation from Deforum's <a href="https://x.com/deforum_art" target="_blank">official account</a>:
 
-![Deforum Example 1](/assets/videos/chronicle-of-video-making-AI/deforum.gif)
+![Deforum Example 1](/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/deforum.gif)
 
 These approaches were still “hacks” on top of image models: each frame was generated separately, then stitched into a video. With careful settings, you could get beautiful results—but you could also get flicker, warping, and characters that constantly changed shape.
 
@@ -77,12 +77,12 @@ This marks a conceptual pivot: video generation is no longer just “many images
 Examples of AnimateDiff animations by <a href="makeitrad" target="_blank">makeitrad</a>:
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/chronicle-of-video-making-AI/animatediff-1.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/animatediff-1.mp4" type="video/mp4" />
   Your browser does not support the video tag. 
 </video>
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/chronicle-of-video-making-AI/animatediff-2.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/animatediff-2.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
@@ -103,12 +103,12 @@ At this stage, text-to-video moved from “experimental demo” to a new medium 
 Examples of Sora-generated videos from OpenAI's <a href="https://x.com/OpenAI" target="_blank">official account</a>:
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/chronicle-of-video-making-AI/sora-1.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/sora-1.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/chronicle-of-video-making-AI/sora-2.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/sora-2.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
@@ -127,12 +127,12 @@ The pattern is clear: what started as closed, lab-only tech is rapidly being re-
 Examples of Wan 2.2 by <a href="https://x.com/fal" target="_blank">Fal.ai</a> and <a href="https://x.com/fofrAI" target="_blank">Fofr</a>:
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/chronicle-of-video-making-AI/wan-1.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/wan-1.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
 <video controls autoplay loop muted playsinline>
-  <source src="/assets/videos/chronicle-of-video-making-AI/wan-2.mp4" type="video/mp4" />
+  <source src="/The-Latent-Playbook/assets/videos/chronicle-of-video-making-AI/wan-2.mp4" type="video/mp4" />
   Your browser does not support the video tag.
 </video>
 
