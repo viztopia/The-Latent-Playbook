@@ -7,6 +7,8 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://viztopia.github.io',
+  base: '/The-Latent-Playbook',
   integrations: [react()],
 
   vite: {
