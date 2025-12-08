@@ -165,7 +165,7 @@ This setup allows the model to accurately transfer the motion from the reference
 
 For production-level application, facial expression transfer is usually a gold standard test. In my tests, while the head movement is pretty accurate, the nuances of the expressions are still a bit hit-or-miss. Below is a series of tests using classic movie scenes with strong emotional acting, as a showcase of its current capabilities / limitations. Here we use a generated middle-aged Asian female character as the source image to animate. Left: original footage, Right: Wan 2.2 Animate output.
 
-<img src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/woman_actor.png" alt="Character Image" style="width:50%;"/>
+<img src="/The-Latent-Playbook/assets/videos/character-animation-wan-animate/woman_actor.jpg" alt="Character Image" style="width:50%;"/>
 
 *Our generated actor character image*
 
