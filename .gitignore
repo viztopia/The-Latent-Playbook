@@ -28,3 +28,10 @@ materials/
 
 # logs
 logs/
+
+# local ref
+ref/
+prime/
+
+# chrome-extension prototype
+chrome-extension/

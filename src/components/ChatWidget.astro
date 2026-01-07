@@ -1,0 +1,1491 @@
+---
+/**
+ * ChatWidget.astro
+ * 
+ * A floating chat widget that provides RAG-powered AI assistance.
+ * Ported from the Chrome extension to work as a standalone Astro component.
+ * 
+ * Configuration is controlled via src/config/chat.ts
+ */
+import { CHAT_CONFIG } from '../config/chat';
+
+// Don't render if disabled
+if (!CHAT_CONFIG.enabled) {
+  return null;
+}
+
+const { apiUrl, debugLog, title, subtitle, welcomeMessage } = CHAT_CONFIG;
+---
+
+<!-- Chat Widget Container (hidden until API check passes) -->
+<div id="chat-widget-root" class="cw-hidden">
+  <!-- Chat Toggle Button -->
+  <button 
+    id="chat-toggle" 
+    aria-label="Open Playbook Assistant"
+  >
+    <!-- Pulse ring effect -->
+    <span id="pulse-ring"></span>
+    
+    <!-- Chat icon (when closed) -->
+    <svg id="icon-chat" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+    </svg>
+    
+    <!-- Close icon (when open) -->
+    <svg id="icon-close" class="cw-hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  </button>
+
+  <!-- Chat Window -->
+  <div id="chat-window" class="cw-hidden">
+    <!-- Header -->
+    <div id="chat-header">
+      <div id="header-left">
+        <!-- Logo/Icon -->
+        <div id="header-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+          </svg>
+        </div>
+        <div id="header-text">
+          <h3 id="header-title">{title}</h3>
+          {subtitle && <p id="header-subtitle">{subtitle}</p>}
+        </div>
+      </div>
+      
+      <!-- Header buttons -->
+      <div id="header-buttons">
+        <!-- Export chat button -->
+        <button id="export-chat" class="header-btn" title="Export chat as Markdown">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+        </button>
+        
+        <!-- Maximize/Minimize button -->
+        <button id="maximize-chat" class="header-btn" title="Maximize chat">
+          <svg id="icon-maximize" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+          </svg>
+          <svg id="icon-minimize" class="cw-hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"></path>
+          </svg>
+        </button>
+        
+        <!-- Clear chat button -->
+        <button id="clear-chat" class="header-btn" title="Clear conversation">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div id="chat-messages">
+      <!-- Welcome message -->
+      <div class="message-row cw-fade-in">
+        <div class="message assistant-message">
+          <p class="message-text">{welcomeMessage}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Typing Indicator (hidden by default) -->
+    <div id="typing-indicator" class="cw-hidden">
+      <div id="typing-bubble">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>
+    </div>
+
+    <!-- Tool Call Indicator (hidden by default) -->
+    <div id="tool-indicator" class="cw-hidden">
+      <svg id="tool-spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      <span id="tool-name">Searching knowledge base...</span>
+    </div>
+
+    <!-- Input Area -->
+    <div id="input-area">
+      <div id="input-row">
+        <input 
+          type="text" 
+          id="message-input" 
+          placeholder="Ask me anything..." 
+        />
+        <button id="send-button">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+/* ============================================================
+ * Chat Widget Styles - Global with ID selectors for isolation
+ * All styles are scoped to #chat-widget-root
+ * ============================================================ */
+
+/* Container */
+#chat-widget-root {
+  all: initial;
+  position: fixed;
+  z-index: 2147483647;
+  bottom: 20px;
+  right: 20px;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+#chat-widget-root *,
+#chat-widget-root *::before,
+#chat-widget-root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+#chat-widget-root button {
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+
+#chat-widget-root input {
+  font-family: inherit;
+  border: none;
+  outline: none;
+}
+
+#chat-widget-root svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Hidden class */
+#chat-widget-root .cw-hidden {
+  display: none !important;
+}
+
+/* Hide the entire widget root when cw-hidden is on it */
+#chat-widget-root.cw-hidden {
+  display: none !important;
+}
+
+/* ============================================================
+ * Toggle Button
+ * ============================================================ */
+#chat-widget-root #chat-toggle {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #161617 !important;
+  border: 2px solid #BA995B !important;
+  box-shadow: 0 12px 30px rgba(22, 22, 23, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  opacity: 0.5;
+}
+
+#chat-widget-root #chat-toggle:hover {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+#chat-widget-root #chat-toggle svg {
+  width: 24px;
+  height: 24px;
+  color: #BA995B;
+}
+
+#chat-widget-root #pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #BA995B;
+  opacity: 0;
+  transform: scale(1);
+  pointer-events: none;
+}
+
+/* Only animate pulse on hover, and only once */
+#chat-widget-root #chat-toggle:hover #pulse-ring {
+  animation: cw-pulse-ring 0.6s ease-out forwards;
+}
+
+@keyframes cw-pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+ * Chat Window
+ * ============================================================ */
+#chat-window {
+  position: absolute;
+  bottom: 80px;
+  right: 0;
+  width: 400px;
+  height: 520px;
+  background: #161617;
+  border-radius: 16px;
+  border: 1px solid rgba(63, 63, 65, 0.6);
+  box-shadow: 0 12px 30px rgba(22, 22, 23, 0.45);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+/* ============================================================
+ * Header
+ * ============================================================ */
+#chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #262628;
+  border-bottom: 1px solid rgba(63, 63, 65, 0.6);
+}
+
+#header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#header-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #BA995B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#header-icon svg {
+  width: 16px;
+  height: 16px;
+  color: #161617;
+}
+
+#header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+#header-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #F5F5F5;
+  font-family: 'Playfair Display', Georgia, serif;
+  margin: 0;
+}
+
+#header-subtitle {
+  font-size: 12px;
+  color: #A3A3A3;
+  margin: 0;
+}
+
+#header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#chat-widget-root .header-btn {
+  padding: 8px;
+  border-radius: 8px;
+  color: #A3A3A3;
+  transition: color 0.2s, background 0.2s;
+  background: transparent;
+}
+
+#chat-widget-root .header-btn:hover {
+  color: #BA995B;
+  background: rgba(38, 38, 40, 0.5);
+}
+
+#chat-widget-root .header-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ============================================================
+ * Messages Container
+ * ============================================================ */
+#chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #161617;
+}
+
+/* Custom scrollbar */
+#chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+#chat-messages::-webkit-scrollbar-track {
+  background: #161617;
+  border-radius: 3px;
+}
+
+#chat-messages::-webkit-scrollbar-thumb {
+  background: #3F3F41;
+  border-radius: 3px;
+}
+
+#chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #A3A3A3;
+}
+
+/* Messages */
+#chat-widget-root .message-row {
+  display: flex;
+  gap: 12px;
+}
+
+#chat-widget-root .message-row.user-row {
+  justify-content: flex-end;
+}
+
+#chat-widget-root .message {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 16px;
+}
+
+#chat-widget-root .user-message {
+  background: #BA995B;
+  color: #161617;
+}
+
+#chat-widget-root .assistant-message {
+  background: #262628;
+  color: rgba(245, 245, 245, 0.85);
+  max-width: 100%;
+}
+
+#chat-widget-root .message-text {
+  font-size: 14px;
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+#chat-widget-root .error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+/* Message animation */
+#chat-widget-root .cw-fade-in {
+  animation: cw-fade-in 0.3s ease-out;
+}
+
+@keyframes cw-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+ * Typing Indicator
+ * ============================================================ */
+#typing-indicator {
+  padding: 0 16px 8px 16px;
+}
+
+#typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: #262628;
+  border-radius: 16px;
+}
+
+#chat-widget-root .typing-dot {
+  width: 8px;
+  height: 8px;
+  background: #BA995B;
+  border-radius: 50%;
+  animation: cw-bounce 1.4s ease-in-out infinite;
+}
+
+#chat-widget-root .typing-dot:nth-child(1) { animation-delay: 0s; }
+#chat-widget-root .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+#chat-widget-root .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes cw-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+
+/* ============================================================
+ * Tool Indicator
+ * ============================================================ */
+#tool-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 8px 16px;
+  font-size: 12px;
+  color: #BA995B;
+}
+
+#tool-spinner {
+  width: 12px;
+  height: 12px;
+  animation: cw-spin 1s linear infinite;
+}
+
+@keyframes cw-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+ * Input Area
+ * ============================================================ */
+#input-area {
+  padding: 16px;
+  background: #262628;
+  border-top: 1px solid rgba(63, 63, 65, 0.6);
+}
+
+#input-row {
+  display: flex;
+  gap: 8px;
+}
+
+#message-input {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 14px;
+  background: #161617;
+  color: #F5F5F5;
+  border: 1px solid rgba(63, 63, 65, 0.6);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#message-input::placeholder {
+  color: #A3A3A3;
+}
+
+#message-input:focus {
+  border-color: #BA995B;
+  box-shadow: 0 0 0 1px #BA995B;
+}
+
+#send-button {
+  padding: 12px 16px;
+  background-color: #BA995B !important;
+  color: #161617;
+  border-radius: 12px;
+  font-weight: 500;
+  box-shadow: 0 12px 30px rgba(22, 22, 23, 0.45);
+  transition: background-color 0.2s;
+}
+
+#send-button svg {
+  width: 20px;
+  height: 20px;
+  color: #161617;
+}
+
+#send-button:hover:not(:disabled) {
+  background-color: #d4b06a !important;
+}
+
+#send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+ * Thinking Section
+ * ============================================================ */
+#chat-widget-root .thinking-toggle {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  background: rgba(186, 153, 91, 0.1);
+  border: 1px solid rgba(186, 153, 91, 0.4);
+  border-radius: 8px;
+  color: #BA995B;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+#chat-widget-root .thinking-toggle:hover {
+  background: rgba(186, 153, 91, 0.2);
+}
+
+#chat-widget-root .thinking-toggle svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s;
+}
+
+#chat-widget-root .thinking-toggle.expanded svg {
+  transform: rotate(90deg);
+}
+
+#chat-widget-root .thinking-content {
+  display: none;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: rgba(38, 38, 40, 0.9);
+  border-left: 3px solid #BA995B;
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  color: #A3A3A3;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#chat-widget-root .thinking-content.expanded {
+  display: block;
+}
+
+#chat-widget-root .thinking-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+#chat-widget-root .thinking-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#chat-widget-root .thinking-content::-webkit-scrollbar-thumb {
+  background: #3F3F41;
+  border-radius: 2px;
+}
+
+/* ============================================================
+ * Markdown Styles
+ * ============================================================ */
+#chat-widget-root .markdown {
+  font-size: 14px;
+  line-height: 1.75;
+  color: rgba(245, 245, 245, 0.9);
+}
+
+#chat-widget-root .markdown p {
+  margin: 0 0 12px 0;
+}
+
+#chat-widget-root .markdown p:last-child {
+  margin-bottom: 0;
+}
+
+#chat-widget-root .markdown strong {
+  font-weight: 600;
+  color: #F5F5F5;
+}
+
+#chat-widget-root .markdown em {
+  font-style: italic;
+}
+
+#chat-widget-root .markdown code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+  font-size: 13px;
+  color: #BA995B;
+}
+
+#chat-widget-root .markdown pre {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+#chat-widget-root .markdown pre code {
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  color: #F5F5F5;
+}
+
+#chat-widget-root .markdown h1,
+#chat-widget-root .markdown h2,
+#chat-widget-root .markdown h3,
+#chat-widget-root .markdown h4 {
+  font-weight: 600;
+  font-family: 'Playfair Display', Georgia, serif;
+  color: #F5F5F5;
+  margin: 16px 0 8px 0;
+  line-height: 1.3;
+}
+
+#chat-widget-root .markdown h1:first-child,
+#chat-widget-root .markdown h2:first-child,
+#chat-widget-root .markdown h3:first-child {
+  margin-top: 0;
+}
+
+#chat-widget-root .markdown h1 { font-size: 20px; }
+#chat-widget-root .markdown h2 { font-size: 18px; }
+#chat-widget-root .markdown h3 { font-size: 16px; }
+#chat-widget-root .markdown h4 { font-size: 15px; }
+
+#chat-widget-root .markdown ul,
+#chat-widget-root .markdown ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+#chat-widget-root .markdown li {
+  margin: 4px 0;
+}
+
+#chat-widget-root .markdown ul li {
+  list-style-type: disc;
+}
+
+#chat-widget-root .markdown ol li {
+  list-style-type: decimal;
+}
+
+#chat-widget-root .markdown blockquote {
+  border-left: 3px solid #BA995B;
+  margin: 12px 0;
+  padding: 8px 12px;
+  background: rgba(186, 153, 91, 0.1);
+  border-radius: 0 8px 8px 0;
+  color: #A3A3A3;
+  font-style: italic;
+}
+
+#chat-widget-root .markdown hr {
+  border: none;
+  border-top: 1px solid #3F3F41;
+  margin: 16px 0;
+}
+
+#chat-widget-root .markdown a {
+  color: #BA995B;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+#chat-widget-root .markdown a:hover {
+  color: #F5F5F5;
+}
+
+/* Table styles */
+#chat-widget-root .markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+#chat-widget-root .markdown th,
+#chat-widget-root .markdown td {
+  border: 1px solid #3F3F41;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+#chat-widget-root .markdown th {
+  background: rgba(186, 153, 91, 0.15);
+  font-weight: 600;
+  color: #BA995B;
+}
+
+#chat-widget-root .markdown tr:nth-child(even) {
+  background: rgba(38, 38, 40, 0.5);
+}
+
+#chat-widget-root .markdown tr:hover {
+  background: rgba(38, 38, 40, 0.8);
+}
+</style>
+
+<script define:vars={{ apiUrl, debugLog }}>
+/**
+ * Chat Widget Client-Side Logic
+ * 
+ * Handles UI interactions, API communication, and streaming responses.
+ */
+(function() {
+  'use strict';
+
+  // Prevent multiple initializations
+  if (window.__chatWidgetInitialized) return;
+  window.__chatWidgetInitialized = true;
+
+  // ============================================================
+  // Debug Logging Helper
+  // ============================================================
+  
+  function debugLogMsg(...args) {
+    if (debugLog) {
+      console.log('[ChatWidget]', ...args);
+    }
+  }
+
+  // ============================================================
+  // API Accessibility Check
+  // ============================================================
+  
+  const CACHE_KEY = 'chatWidget_apiAccessible';
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  const API_TIMEOUT = 5000; // 5 seconds
+
+  async function checkApiAccessibility() {
+    // Check sessionStorage cache first
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { accessible, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < CACHE_DURATION) {
+        return accessible;
+      }
+    }
+
+    // Perform health check with timeout
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+      
+      const response = await fetch(`${apiUrl}/`, {
+        method: 'GET',
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      const accessible = response.ok;
+      
+      // Cache the result
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+        accessible,
+        timestamp: Date.now()
+      }));
+      
+      return accessible;
+    } catch (error) {
+      debugLogMsg('API not accessible:', error.message);
+      
+      // Cache negative result
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+        accessible: false,
+        timestamp: Date.now()
+      }));
+      
+      return false;
+    }
+  }
+
+  // Show widget only if API is accessible
+  async function initializeWidget() {
+    const widgetRoot = document.getElementById('chat-widget-root');
+    
+    const isAccessible = await checkApiAccessibility();
+    
+    if (isAccessible) {
+      widgetRoot.classList.remove('cw-hidden');
+      debugLogMsg('API accessible, widget enabled');
+      setupWidget();
+    } else {
+      debugLogMsg('API not accessible, widget hidden');
+    }
+  }
+
+  function setupWidget() {
+  // ============================================================
+  // State Management
+  // ============================================================
+  
+  let isOpen = false;
+  let isStreaming = false;
+  let isMaximized = false;
+  let currentAssistantMessage = null;
+  let currentRawContent = '';
+  let conversationHistory = [];
+
+  // ============================================================
+  // DOM Elements
+  // ============================================================
+  
+  const chatToggle = document.getElementById('chat-toggle');
+  const chatWindow = document.getElementById('chat-window');
+  const messagesContainer = document.getElementById('chat-messages');
+  const messageInput = document.getElementById('message-input');
+  const sendButton = document.getElementById('send-button');
+  const clearButton = document.getElementById('clear-chat');
+  const exportButton = document.getElementById('export-chat');
+  const maximizeButton = document.getElementById('maximize-chat');
+  const iconMaximize = document.getElementById('icon-maximize');
+  const iconMinimize = document.getElementById('icon-minimize');
+  const typingIndicator = document.getElementById('typing-indicator');
+  const toolIndicator = document.getElementById('tool-indicator');
+  const toolName = document.getElementById('tool-name');
+  const iconChat = document.getElementById('icon-chat');
+  const iconClose = document.getElementById('icon-close');
+
+  // ============================================================
+  // Event Listeners
+  // ============================================================
+
+  chatToggle.addEventListener('click', toggleChat);
+  sendButton.addEventListener('click', sendMessage);
+  messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  clearButton.addEventListener('click', clearConversation);
+  exportButton.addEventListener('click', exportChat);
+  maximizeButton.addEventListener('click', toggleMaximize);
+
+  // ============================================================
+  // UI Actions
+  // ============================================================
+
+  function toggleChat() {
+    isOpen = !isOpen;
+    
+    if (isOpen) {
+      chatWindow.classList.remove('cw-hidden');
+      iconChat.classList.add('cw-hidden');
+      iconClose.classList.remove('cw-hidden');
+      messageInput.focus();
+    } else {
+      chatWindow.classList.add('cw-hidden');
+      iconChat.classList.remove('cw-hidden');
+      iconClose.classList.add('cw-hidden');
+    }
+  }
+
+  function toggleMaximize() {
+    isMaximized = !isMaximized;
+    
+    if (isMaximized) {
+      chatWindow.style.width = '700px';
+      chatWindow.style.height = '600px';
+      iconMaximize.classList.add('cw-hidden');
+      iconMinimize.classList.remove('cw-hidden');
+      maximizeButton.title = 'Minimize chat';
+    } else {
+      chatWindow.style.width = '400px';
+      chatWindow.style.height = '520px';
+      iconMaximize.classList.remove('cw-hidden');
+      iconMinimize.classList.add('cw-hidden');
+      maximizeButton.title = 'Maximize chat';
+    }
+    
+    scrollToBottom();
+  }
+
+  async function sendMessage() {
+    const message = messageInput.value.trim();
+    
+    if (!message || isStreaming) return;
+
+    // Add user message to UI
+    addMessage('user', message);
+
+    // Add to history
+    conversationHistory.push({ role: 'user', content: message });
+
+    // Clear input
+    messageInput.value = '';
+
+    // Set streaming state
+    setStreamingState(true);
+    showTypingIndicator();
+
+    try {
+      await streamChatResponse(message);
+    } catch (error) {
+      console.error('[ChatWidget] Error:', error);
+      handleStreamError({ message: error.message || 'Failed to connect to the assistant.' });
+    }
+  }
+
+  function clearConversation() {
+    const messages = messagesContainer.querySelectorAll('.chat-message');
+    messages.forEach(msg => msg.remove());
+    conversationHistory = [];
+    currentAssistantMessage = null;
+    currentRawContent = '';
+    isStreaming = false;
+  }
+
+  function exportChat() {
+    // Build markdown content from conversation history
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    let markdown = `# Chat Export\n\n`;
+    markdown += `**Exported:** ${new Date().toLocaleString()}\n\n`;
+    markdown += `---\n\n`;
+
+    // Use conversation history for accurate content
+    conversationHistory.forEach((msg) => {
+      const role = msg.role === 'user' ? 'User' : 'Assistant';
+      let content = msg.content;
+      
+      // Remove thinking content from assistant messages for cleaner export
+      if (msg.role === 'assistant') {
+        const thinkEndIndex = content.indexOf('</think>');
+        if (thinkEndIndex !== -1) {
+          content = content.substring(thinkEndIndex + 8).trim();
+        }
+      }
+      
+      if (content.trim()) {
+        markdown += `## ${role}\n\n${content.trim()}\n\n`;
+      }
+    });
+
+    // If no history, get the welcome message
+    if (conversationHistory.length === 0) {
+      const welcomeEl = messagesContainer.querySelector('.message-text');
+      if (welcomeEl) {
+        markdown += `## Assistant\n\n${welcomeEl.textContent.trim()}\n\n`;
+      }
+    }
+
+    // Create and trigger download
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-export-${timestamp}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    debugLogMsg('Chat exported');
+  }
+
+  // ============================================================
+  // API Communication (SSE Streaming)
+  // ============================================================
+
+  async function streamChatResponse(message) {
+    const url = `${apiUrl}/chat`;
+    
+    debugLogMsg('Connecting to chat API');
+
+    let assistantResponse = '';
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream'
+      },
+      body: JSON.stringify({ 
+        message, 
+        history: conversationHistory.slice(0, -1) 
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API error: ${response.status} - ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error('Streaming not supported');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        debugLogMsg('Stream ended');
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
+      const events = parseSSEEvents(buffer);
+      buffer = events.remainder;
+
+      for (const event of events.events) {
+        const result = processSSEEvent(event);
+        
+        if (result.content) {
+          assistantResponse += result.content;
+        }
+        
+        if (result.done) {
+          conversationHistory.push({ role: 'assistant', content: assistantResponse });
+          handleStreamEnd();
+          return;
+        }
+        
+        if (result.error) {
+          throw new Error(result.error);
+        }
+      }
+    }
+
+    if (assistantResponse) {
+      conversationHistory.push({ role: 'assistant', content: assistantResponse });
+    }
+    
+    handleStreamEnd();
+  }
+
+  // ============================================================
+  // SSE Parsing
+  // ============================================================
+
+  function parseSSEEvents(buffer) {
+    const events = [];
+    const lines = buffer.split('\n');
+    
+    let currentEvent = { event: null, data: null };
+    let remainder = '';
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (i === lines.length - 1 && !buffer.endsWith('\n')) {
+        remainder = line;
+        break;
+      }
+
+      if (line === '') {
+        if (currentEvent.data !== null) {
+          events.push({ ...currentEvent });
+          currentEvent = { event: null, data: null };
+        }
+        continue;
+      }
+
+      if (line.startsWith('event:')) {
+        currentEvent.event = line.substring(6).trim();
+        continue;
+      }
+
+      if (line.startsWith('data:')) {
+        const data = line.substring(5).trim();
+        currentEvent.data = currentEvent.data ? currentEvent.data + '\n' + data : data;
+        continue;
+      }
+
+      if (line.startsWith(':')) {
+        continue;
+      }
+    }
+
+    return { events, remainder };
+  }
+
+  function processSSEEvent(event) {
+    const result = { content: null, done: false, error: null };
+
+    if (event.event === 'error') {
+      try {
+        const errorData = JSON.parse(event.data);
+        result.error = errorData.message || 'An error occurred';
+      } catch {
+        result.error = event.data || 'An error occurred';
+      }
+      return result;
+    }
+
+    if (!event.data) return result;
+
+    try {
+      const data = JSON.parse(event.data);
+
+      switch (data.type) {
+        case 'text':
+          result.content = data.content;
+          handleStreamChunk({ content: data.content });
+          break;
+
+        case 'tool_call':
+          handleToolCall({ name: data.name, args: data.args });
+          break;
+
+        case 'done':
+          result.done = true;
+          break;
+
+        case 'error':
+          result.error = data.message || 'An error occurred';
+          break;
+      }
+    } catch (e) {
+      console.warn('[ChatWidget] Failed to parse SSE data:', event.data, e);
+    }
+
+    return result;
+  }
+
+  // ============================================================
+  // Stream Handling
+  // ============================================================
+
+  function handleStreamChunk(payload) {
+    hideTypingIndicator();
+    hideToolIndicator();
+
+    if (!currentAssistantMessage) {
+      currentAssistantMessage = addMessage('assistant', '');
+      currentRawContent = '';
+    }
+
+    currentRawContent += payload.content;
+
+    const contentEl = currentAssistantMessage.querySelector('.assistant-content');
+    if (contentEl) {
+      contentEl.textContent = currentRawContent;
+      scrollToBottom();
+    }
+  }
+
+  function handleToolCall(payload) {
+    showToolIndicator(payload.name);
+  }
+
+  function handleStreamEnd() {
+    hideTypingIndicator();
+    hideToolIndicator();
+    setStreamingState(false);
+    
+    if (currentAssistantMessage && currentRawContent) {
+      processThinkingContent(currentAssistantMessage, currentRawContent);
+    }
+    
+    currentAssistantMessage = null;
+    currentRawContent = '';
+  }
+
+  function handleStreamError(payload) {
+    hideTypingIndicator();
+    hideToolIndicator();
+    setStreamingState(false);
+    currentAssistantMessage = null;
+    currentRawContent = '';
+    addErrorMessage(payload.message || 'An error occurred. Please try again.');
+  }
+
+  // ============================================================
+  // Thinking Content Processing
+  // ============================================================
+
+  function processThinkingContent(messageEl, rawContent) {
+    const thinkEndIndex = rawContent.indexOf('</think>');
+    
+    let thinkingContent = '';
+    let responseContent = rawContent;
+    
+    if (thinkEndIndex !== -1) {
+      thinkingContent = rawContent.substring(0, thinkEndIndex).trim();
+      responseContent = rawContent.substring(thinkEndIndex + 8).trim();
+    }
+
+    const wrapper = messageEl.querySelector('.assistant-content-wrapper');
+    if (!wrapper) return;
+
+    wrapper.innerHTML = '';
+
+    if (thinkingContent) {
+      const thinkingToggle = document.createElement('div');
+      thinkingToggle.className = 'thinking-toggle';
+      thinkingToggle.innerHTML = `
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+        <span>Show thinking</span>
+      `;
+
+      const thinkingDiv = document.createElement('div');
+      thinkingDiv.className = 'thinking-content';
+      thinkingDiv.textContent = thinkingContent;
+
+      thinkingToggle.addEventListener('click', () => {
+        const isExpanded = thinkingToggle.classList.toggle('expanded');
+        thinkingDiv.classList.toggle('expanded');
+        thinkingToggle.querySelector('span').textContent = isExpanded ? 'Hide thinking' : 'Show thinking';
+      });
+
+      wrapper.appendChild(thinkingToggle);
+      wrapper.appendChild(thinkingDiv);
+    }
+
+    const responseDiv = document.createElement('div');
+    responseDiv.className = 'markdown assistant-content';
+    responseDiv.innerHTML = renderMarkdown(responseContent);
+
+    wrapper.appendChild(responseDiv);
+    scrollToBottom();
+  }
+
+  // ============================================================
+  // Markdown Renderer
+  // ============================================================
+
+  function renderMarkdown(text) {
+    if (!text) return '';
+    
+    let html = escapeHtml(text);
+    
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+      return `<pre><code class="language-${lang}">${code.trim()}</code></pre>`;
+    });
+    
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    html = processMarkdownTables(html);
+    html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    html = html.replace(/(?<![*_])\*([^*]+)\*(?![*_])/g, '<em>$1</em>');
+    html = html.replace(/(?<![*_])_([^_]+)_(?![*_])/g, '<em>$1</em>');
+    html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+    html = html.replace(/<\/blockquote>\n<blockquote>/g, '\n');
+    html = html.replace(/^---+$/gm, '<hr>');
+    html = html.replace(/^\*\*\*+$/gm, '<hr>');
+    html = processMarkdownLists(html);
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    
+    const blocks = html.split(/\n\n+/);
+    html = blocks.map(block => {
+      block = block.trim();
+      if (!block) return '';
+      if (block.startsWith('<h') || block.startsWith('<pre') || 
+          block.startsWith('<blockquote') || block.startsWith('<ul') ||
+          block.startsWith('<ol') || block.startsWith('<table') ||
+          block.startsWith('<hr')) {
+        return block;
+      }
+      return '<p>' + block.replace(/\n/g, '<br>') + '</p>';
+    }).join('\n');
+    
+    return html;
+  }
+
+  function processMarkdownTables(html) {
+    const tableRegex = /^\|(.+)\|\n\|[-:| ]+\|\n((?:\|.+\|\n?)+)/gm;
+    
+    return html.replace(tableRegex, (match, headerRow, bodyRows) => {
+      const headers = headerRow.split('|').map(h => h.trim()).filter(h => h);
+      const rows = bodyRows.trim().split('\n').map(row => {
+        return row.split('|').map(cell => cell.trim()).filter(cell => cell);
+      });
+      
+      let tableHtml = '<table><thead><tr>';
+      headers.forEach(header => {
+        tableHtml += `<th>${header}</th>`;
+      });
+      tableHtml += '</tr></thead><tbody>';
+      
+      rows.forEach(row => {
+        tableHtml += '<tr>';
+        row.forEach(cell => {
+          let cellContent = cell;
+          cellContent = cellContent.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          cellContent = cellContent.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+          cellContent = cellContent.replace(/`([^`]+)`/g, '<code>$1</code>');
+          tableHtml += `<td>${cellContent}</td>`;
+        });
+        tableHtml += '</tr>';
+      });
+      
+      tableHtml += '</tbody></table>';
+      return tableHtml;
+    });
+  }
+
+  function processMarkdownLists(html) {
+    const lines = html.split('\n');
+    let result = [];
+    let inList = false;
+    let listType = null;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const ulMatch = line.match(/^[-*] (.+)$/);
+      const olMatch = line.match(/^\d+\. (.+)$/);
+      
+      if (ulMatch) {
+        if (!inList || listType !== 'ul') {
+          if (inList) result.push(listType === 'ul' ? '</ul>' : '</ol>');
+          result.push('<ul>');
+          inList = true;
+          listType = 'ul';
+        }
+        result.push(`<li>${ulMatch[1]}</li>`);
+      } else if (olMatch) {
+        if (!inList || listType !== 'ol') {
+          if (inList) result.push(listType === 'ul' ? '</ul>' : '</ol>');
+          result.push('<ol>');
+          inList = true;
+          listType = 'ol';
+        }
+        result.push(`<li>${olMatch[1]}</li>`);
+      } else {
+        if (inList) {
+          result.push(listType === 'ul' ? '</ul>' : '</ol>');
+          inList = false;
+          listType = null;
+        }
+        result.push(line);
+      }
+    }
+    
+    if (inList) {
+      result.push(listType === 'ul' ? '</ul>' : '</ol>');
+    }
+    
+    return result.join('\n');
+  }
+
+  // ============================================================
+  // Message Rendering
+  // ============================================================
+
+  function addMessage(role, content) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message-row cw-fade-in chat-message' + (role === 'user' ? ' user-row' : '');
+    
+    if (role === 'user') {
+      messageDiv.innerHTML = `
+        <div class="message user-message">
+          <p class="message-text">${escapeHtml(content)}</p>
+        </div>
+      `;
+    } else {
+      messageDiv.innerHTML = `
+        <div class="message assistant-message">
+          <div class="assistant-content-wrapper">
+            <p class="message-text assistant-content">${escapeHtml(content)}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+
+    return messageDiv;
+  }
+
+  function addErrorMessage(errorText) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message-row cw-fade-in chat-message';
+    messageDiv.innerHTML = `
+      <div class="message error-message">
+        <p class="message-text">${escapeHtml(errorText)}</p>
+      </div>
+    `;
+
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  // ============================================================
+  // UI Helpers
+  // ============================================================
+
+  function setStreamingState(streaming) {
+    isStreaming = streaming;
+    sendButton.disabled = streaming;
+    messageInput.disabled = streaming;
+  }
+
+  function showTypingIndicator() {
+    typingIndicator.classList.remove('cw-hidden');
+    scrollToBottom();
+  }
+
+  function hideTypingIndicator() {
+    typingIndicator.classList.add('cw-hidden');
+  }
+
+  function showToolIndicator(name) {
+    const toolNameMap = {
+      'search_knowledge_base': 'Searching knowledge base...',
+      'default': 'Processing...'
+    };
+    
+    toolName.textContent = toolNameMap[name] || toolNameMap['default'];
+    toolIndicator.classList.remove('cw-hidden');
+  }
+
+  function hideToolIndicator() {
+    toolIndicator.classList.add('cw-hidden');
+  }
+
+  function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  debugLogMsg('Widget initialized');
+  } // End of setupWidget()
+
+  // Start the initialization
+  initializeWidget();
+})();
+</script>

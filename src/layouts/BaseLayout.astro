@@ -8,6 +8,7 @@ import '@fontsource/jetbrains-mono/400.css';
 
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import ChatWidget from '../components/ChatWidget.astro';
 
 const siteTitle = 'The Latent Playbook';
 const siteDescription =
@@ -51,5 +52,6 @@ const pageTitle = title === siteTitle ? siteTitle : `${title} • ${siteTitle}`;
       <slot />
     </main>
     <Footer />
+    <ChatWidget />
   </body>
 </html>
